@@ -45,6 +45,7 @@ struct GeneralSettingsView: View {
     @ObservedObject var model: AppModel
     @EnvironmentObject private var l10n: Localization
     @StateObject private var languageMenu = ToggleState()
+    @StateObject private var updateChecker = UpdateChecker()
     var onClose: () -> Void
     @Environment(\.colorScheme) private var colorScheme
 
@@ -202,6 +203,22 @@ struct GeneralSettingsView: View {
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 12)
+
+                hairline
+
+                HStack(spacing: 10) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(l10n.t("检查更新"))
+                            .font(.system(size: 12.5, weight: .semibold))
+                        Text(updateStatusText)
+                            .font(.system(size: 11))
+                            .foregroundStyle(Color.v2aSecondary)
+                    }
+                    Spacer(minLength: 8)
+                    updateAction
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 12)
             }
 
             HStack {
@@ -259,6 +276,39 @@ struct GeneralSettingsView: View {
         }
         .padding(6)
         .frame(width: 170)
+    }
+
+    @ViewBuilder
+    private var updateAction: some View {
+        switch updateChecker.state {
+        case .checking:
+            ProgressView().controlSize(.small)
+        case .available(let version, let url):
+            Button(l10n.t("前往下载")) { NSWorkspace.shared.open(url) }
+                .buttonStyle(PillButtonStyle(minWidth: 88))
+                .help("v\(version)")
+        case .failed:
+            Button(l10n.t("重试")) { updateChecker.check() }
+                .buttonStyle(SoftButtonStyle(compact: true))
+        default:
+            Button(l10n.t("检查")) { updateChecker.check() }
+                .buttonStyle(SoftButtonStyle(compact: true))
+        }
+    }
+
+    private var updateStatusText: String {
+        switch updateChecker.state {
+        case .idle:
+            return l10n.t("当前版本 \(updateChecker.currentVersion)")
+        case .checking:
+            return l10n.t("正在检查…")
+        case .upToDate:
+            return l10n.t("已是最新版本")
+        case .available(let version, _):
+            return l10n.t("发现新版本 \(version)")
+        case .failed(let message):
+            return message
+        }
     }
 
     // MARK: - 卡片

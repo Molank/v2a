@@ -171,6 +171,12 @@ video-to-audio/
 └── docs/                   # 界面预览图
 ```
 
+## 检查更新
+
+偏好设置 → 关于 → 检查更新：读 `api.github.com/repos/Molank/v2a/releases/latest` 比较版本号，
+有新版本时给一个「前往下载」按钮跳到 Release 页面。API 被限流时自动改用
+`github.com/.../releases/latest` 的跳转地址判断，不依赖登录。
+
 ## 发布（GitHub Releases）
 
 仓库只提交源码、资源与文档；可运行的 App 作为 Release 附件分发：
