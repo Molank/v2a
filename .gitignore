@@ -1,0 +1,18 @@
+# 构建产物
+build/
+.tmp/
+.tmpicon/
+V2A.app/
+*.zip
+*.dmg
+
+# 系统 / 编辑器
+.DS_Store
+__pycache__/
+*.pyc
+
+# 第三方二进制（体积过大，见 README「依赖」）
+bin/
+
+# 依赖文件里的副本
+* 2

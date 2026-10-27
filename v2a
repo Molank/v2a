@@ -1,0 +1,170 @@
+#!/bin/bash
+# v2a — 从视频里提取音频（ffmpeg 的薄封装）
+# 用法: v2a [-f m4a|mp3|wav|flac] [-b 码率] [-a 音轨号] [-o 输出目录] <文件或文件夹>...
+set -uo pipefail
+
+SELF_DIR="$(cd "$(dirname "$0")" && pwd)"
+export PATH="$SELF_DIR/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+
+FMT="m4a"
+BITRATE=""
+OUTDIR=""
+TRACK=0
+
+usage() {
+  cat <<'EOF'
+用法: v2a [选项] <视频文件或文件夹>...
+
+  -f <格式>   输出格式: m4a(默认) | mp3 | wav | flac | aac
+  -b <码率>   有损编码码率，如 128k / 192k / 320k（默认 192k，mp3 默认 VBR ~190k）
+  -a <音轨>   取第几条音轨，从 0 开始（默认 0）
+  -o <目录>   输出到指定目录（默认与视频同目录）
+  -h          显示本帮助
+
+例:
+  v2a 电影.mp4                 # 同目录生成 电影.m4a
+  v2a -f mp3 -b 320k *.mkv     # 批量转 320k mp3
+  v2a -f wav -a 1 演唱会.ts    # 取第 2 条音轨转 wav
+EOF
+}
+
+die() { printf '%s\n' "$*" >&2; exit 1; }
+
+while getopts ":f:b:a:o:h" opt; do
+  case "$opt" in
+    f) FMT="$OPTARG" ;;
+    b) BITRATE="$OPTARG" ;;
+    a) TRACK="$OPTARG" ;;
+    o) OUTDIR="$OPTARG" ;;
+    h) usage; exit 0 ;;
+    :) die "选项 -$OPTARG 缺少参数" ;;
+    *) usage >&2; exit 2 ;;
+  esac
+done
+shift $((OPTIND - 1))
+
+[ $# -ge 1 ] || { usage >&2; exit 2; }
+
+case "$FMT" in
+  m4a|mp3|wav|flac|aac) ;;
+  *) die "不支持的格式: $FMT（可选 m4a / mp3 / wav / flac / aac）" ;;
+esac
+
+command -v ffmpeg >/dev/null 2>&1 || die "找不到 ffmpeg，请先运行: brew install ffmpeg"
+command -v ffprobe >/dev/null 2>&1 || die "找不到 ffprobe，请先运行: brew install ffmpeg"
+
+if [ -n "$OUTDIR" ]; then
+  mkdir -p "$OUTDIR" || die "无法创建输出目录: $OUTDIR"
+fi
+
+ok=0
+fail=0
+outdirs=""
+
+# 视频扩展名（小写比较）
+is_video() {
+  case "${1##*.}" in
+    [mM][pP]4|[mM][oO][vV]|[mM]4[vV]|[mM][kK][vV]|[aA][vV][iI]|[fF][lL][vV]|\
+    [wW][eE][bB][mM]|[tT][sS]|[mM]2[tT][sS]|[wW][mM][vV]|[mM][pP][gG]|[mM][pP][eE][gG]|\
+    [3Ff][gG][pP][2]|[rR][mM][vV][bB]|[vV][oO][bB]|[oO][gG][vV]|[mM][xX][fF]) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+unique_out() {
+  local dir="$1" base="$2" ext="$3" candidate="$1/$2.$3" n=2
+  while [ -e "$candidate" ]; do
+    candidate="$dir/$base ($n).$ext"
+    n=$((n + 1))
+  done
+  printf '%s' "$candidate"
+}
+
+process_one() {
+  local in="$1" dir base out codec err
+
+  [ -f "$in" ] || { printf '跳过（不是文件）: %s\n' "$in" >&2; fail=$((fail + 1)); return; }
+
+  base="$(basename "$in")"
+  base="${base%.*}"
+
+  if [ -n "$OUTDIR" ]; then dir="$OUTDIR"; else dir="$(dirname "$in")"; fi
+
+  codec="$(ffprobe -v error -select_streams "a:$TRACK" \
+            -show_entries stream=codec_name -of default=nw=1:nk=1 "$in" 2>/dev/null)"
+  if [ -z "$codec" ]; then
+    printf '跳过（没有可用的第 %s 条音轨）: %s\n' "$TRACK" "$base" >&2
+    fail=$((fail + 1)); return
+  fi
+
+  out="$(unique_out "$dir" "$base" "$FMT")"
+
+  local args=(-hide_banner -nostdin -loglevel error -y -i "$in"
+              -map "0:a:$TRACK" -vn -sn -dn)
+
+  case "$FMT" in
+    m4a)
+      if [ "$codec" = "aac" ] || [ "$codec" = "alac" ]; then
+        args+=(-c:a copy -map_metadata 0)
+      else
+        args+=(-c:a aac -b:a "${BITRATE:-192k}" -map_metadata 0)
+      fi ;;
+    mp3)
+      if [ "$codec" = "mp3" ]; then
+        args+=(-c:a copy -map_metadata 0)
+      elif [ -n "$BITRATE" ]; then
+        args+=(-c:a libmp3lame -b:a "$BITRATE" -map_metadata 0)
+      else
+        args+=(-c:a libmp3lame -q:a 2 -map_metadata 0)
+      fi ;;
+    wav)
+      args+=(-c:a pcm_s16le -map_metadata -1) ;;
+    flac)
+      if [ "$codec" = "flac" ]; then
+        args+=(-c:a copy -map_metadata 0)
+      else
+        args+=(-c:a flac -compression_level 8 -map_metadata 0)
+      fi ;;
+    aac)
+      args+=(-c:a aac -b:a "${BITRATE:-192k}" -f adts -map_metadata -1) ;;
+  esac
+
+  if err="$(ffmpeg "${args[@]}" "$out" 2>&1)"; then
+    printf '✓ %s\n' "$out"
+    ok=$((ok + 1))
+    case " $outdirs " in
+      *" $dir "*) ;;
+      *) outdirs="${outdirs:+$outdirs$'\n'}$dir" ;;
+    esac
+  else
+    printf '失败: %s\n%s\n' "$in" "$err" >&2
+    rm -f "$out"
+    fail=$((fail + 1))
+  fi
+}
+
+for target in "$@"; do
+  if [ -d "$target" ]; then
+    found=0
+    while IFS= read -r -d '' f; do
+      is_video "$f" && { process_one "$f"; found=1; }
+    done < <(find "$target" -maxdepth 1 -type f -print0 2>/dev/null | sort -z)
+    [ "$found" -eq 0 ] && printf '文件夹里没找到视频文件: %s\n' "$target" >&2
+  else
+    process_one "$target"
+  fi
+done
+
+if [ "$fail" -gt 0 ]; then
+  printf '\n完成：成功 %d 个，失败/跳过 %d 个\n' "$ok" "$fail" >&2
+  exit 1
+fi
+
+[ "$ok" -eq 0 ] && { printf '没有处理任何文件\n' >&2; exit 1; }
+
+first_dir="$(printf '%s' "$outdirs" | head -1)"
+if [ "$(printf '%s' "$outdirs" | sort -u | wc -l | tr -d ' ')" -eq 1 ]; then
+  printf '已提取 %d 个音频 → %s\n' "$ok" "$first_dir"
+else
+  printf '已提取 %d 个音频 → 各自视频所在目录\n' "$ok"
+fi
