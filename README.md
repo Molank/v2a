@@ -4,6 +4,19 @@ macOS 上把视频里的声音取出来的小工具：拖进去，选格式，�
 
 原生 SwiftUI 界面：标题区毛玻璃 + 白色工作区 + 悬浮在内容之上的 Liquid Glass 胶囊栏（`NSGlassEffectView`，列表从玻璃下面滚过）、macOS 26+ 的 Liquid Glass 圆形按钮、SF Symbols 矢量图标、波形时间轴裁剪、行内进度、可取消。
 
+## 下载
+
+- 最新版：<https://github.com/Molank/v2a/releases/latest>
+- 仓库：<https://github.com/Molank/v2a>
+
+解压后把 `V2A.app` 拖进「应用程序」。首次打开若提示「无法验证开发者」，右键 App → 打开，或执行：
+
+```bash
+xattr -dr com.apple.quarantine /Applications/V2A.app
+```
+
+需要下载会员内容时，到「偏好设置 → 完全磁盘访问」授权并重启 App。
+
 ## 用法一：拖拽 App（推荐）
 
 App 已经装在 `/Applications/V2A.app`，直接打开即可（也可以在启动台 / 聚焦里搜 V2A）。
