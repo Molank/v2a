@@ -1,6 +1,8 @@
 import Foundation
 import SwiftUI
 
+private let v2aRepository = "Molank/v2a"
+
 /// 用 GitHub Releases 做「检查更新」：只比较版本号并跳转下载页，不做自动替换
 @MainActor
 final class UpdateChecker: ObservableObject {
@@ -12,8 +14,6 @@ final class UpdateChecker: ObservableObject {
         case failed(String)
     }
 
-    static let repository = "Molank/v2a"
-
     @Published var state: State = .idle
 
     var currentVersion: String {
@@ -24,7 +24,7 @@ final class UpdateChecker: ObservableObject {
         guard state != .checking else { return }
         state = .checking
 
-        guard let endpoint = URL(string: "https://api.github.com/repos/\(Self.repository)/releases/latest") else {
+        guard let endpoint = URL(string: "https://api.github.com/repos/\(v2aRepository)/releases/latest") else {
             state = .failed("链接无效")
             return
         }
@@ -53,7 +53,7 @@ final class UpdateChecker: ObservableObject {
 
     // MARK: - 兜底：读 releases/latest 的 302 目标
 
-    private final class RedirectCatcher: NSObject, URLSessionTaskDelegate {
+    private final class RedirectCatcher: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
         var target: URL?
         func urlSession(_ session: URLSession, task: URLSessionTask,
                         willPerformHTTPRedirection response: HTTPURLResponse,
@@ -66,7 +66,7 @@ final class UpdateChecker: ObservableObject {
 
     nonisolated private static func checkViaRedirect(current: String,
                                                      completion: @escaping (State?) -> Void) {
-        guard let url = URL(string: "https://github.com/\(repository)/releases/latest") else {
+        guard let url = URL(string: "https://github.com/\(v2aRepository)/releases/latest") else {
             completion(nil)
             return
         }
@@ -111,7 +111,7 @@ final class UpdateChecker: ObservableObject {
 
         let tag = (json["tag_name"] as? String) ?? ""
         let version = tag.hasPrefix("v") ? String(tag.dropFirst()) : tag
-        let page = (json["html_url"] as? String) ?? "https://github.com/\(repository)/releases"
+        let page = (json["html_url"] as? String) ?? "https://github.com/\(v2aRepository)/releases"
         let url = URL(string: page) ?? URL(string: "https://github.com")!
 
         guard !version.isEmpty else { return .failed("没有解析到版本号") }

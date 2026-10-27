@@ -177,17 +177,21 @@ video-to-audio/
 有新版本时给一个「前往下载」按钮跳到 Release 页面。API 被限流时自动改用
 `github.com/.../releases/latest` 的跳转地址判断，不依赖登录。
 
-## 发布（GitHub Releases）
+## 发布（一条命令）
 
-仓库只提交源码、资源与文档；可运行的 App 作为 Release 附件分发：
+仓库只提交源码、资源与文档；可运行的 App 作为 Release 附件分发。发版：
 
 ```bash
-./build.sh --install
-ditto -c -k --sequesterRsrc --keepParent /Applications/V2A.app dist/V2A-1.0.0.zip
+export GH_TOKEN=ghp_xxx      # 或 echo ghp_xxx > .gh_token（已 gitignore）
+./release.sh 1.1.0           # 改版本号 → 构建 → 打包 → 提交打 tag → 建 Release 上传附件
+./release.sh 1.1.0 --dry-run # 只构建打包，不推送
 ```
 
-然后在 GitHub 上新建 Release（tag `v1.0.0`），把 `dist/V2A-1.0.0.zip` 拖进附件即可。
-后续版本把 `latest.json` 或 GitHub Releases API 接进「检查更新」按钮时，读的就是这里的 tag。
+脚本会：写 `Info.plist` 的 `CFBundleShortVersionString` → `./build.sh --install` →
+`ditto` 打包到 `dist/V2A-<版本>.zip` → commit + tag `v<版本>` → push →
+调 GitHub API 建 Release 并上传 zip。完成后打印下载地址。
+
+App 里的「检查更新」读的就是这个 Release 的 `tag_name`，所以发版后用户点一下就能看到新版本。
 
 ## 重新编译 / 安装
 
