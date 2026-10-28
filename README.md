@@ -1,8 +1,8 @@
 # V2A · Video to Audio
 
-macOS 上把视频里的声音取出来的小工具：拖进去，选格式，点一下，音频落在视频旁边。
+macOS 上把视频里的声音取出来的小工具,同时具备下载视频到本地的功能。
 
-原生 SwiftUI 界面：标题区毛玻璃 + 白色工作区 + 悬浮在内容之上的 Liquid Glass 胶囊栏（`NSGlassEffectView`，列表从玻璃下面滚过）、macOS 26+ 的 Liquid Glass 圆形按钮、SF Symbols 矢量图标、波形时间轴裁剪、行内进度、可取消。
+macOS 原生风格界面，干净纯粹
 
 ## 下载
 
