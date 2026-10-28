@@ -3,6 +3,7 @@ build/
 .tmp/
 .tmpicon/
 .shots/
+test/
 V2A.app/
 *.zip
 *.dmg
