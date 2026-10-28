@@ -311,7 +311,7 @@ struct ContentView: View {
             HStack(spacing: 10) {
                 destinationMenu
                 Spacer(minLength: 0)
-                Text(model.summary ?? statusHint)
+                Text(footerHint)
                     .font(.system(size: 11))
                     .foregroundStyle(Color.v2aSecondary)
                     .lineLimit(1)
@@ -351,6 +351,14 @@ struct ContentView: View {
         .sheet(isPresented: $model.showGeneralSettings) {
             GeneralSettingsView(model: model) { model.showGeneralSettings = false }
         }
+    }
+
+    /// 底栏提示：列表空了就回到初始文案，不残留上一次的结果
+    private var footerHint: String {
+        if model.items.isEmpty && model.downloads.isEmpty && !model.isRunning {
+            return l10n.t("尚未添加文件")
+        }
+        return model.summary ?? statusHint
     }
 
     private var statusHint: String {

@@ -129,6 +129,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
 
+        if arguments.contains("--clear") {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 10) { [weak self] in
+                self?.model.clear()
+            }
+        }
+
         if arguments.contains("--show-trim") {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) { [weak self] in
                 guard let self, let current = self.model.items.first else { return }

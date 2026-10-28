@@ -589,6 +589,8 @@ final class AppModel: ObservableObject {
     func remove(_ id: UUID) {
         guard !isRunning else { return }
         items.removeAll { $0.id == id }
+        // 清空后提示文字要复位，不能留着上一次的「已提取 N 个」
+        if items.isEmpty { summary = nil }
     }
 
     func clear() {
