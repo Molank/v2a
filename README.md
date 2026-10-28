@@ -4,6 +4,7 @@ macOS 上把视频里的声音取出来的小工具,同时具备下载视频到�
 
 macOS 原生风格界面，干净纯粹
 
+
 ## 下载
 
 - 最新版：<https://github.com/Molank/v2a/releases/latest>
@@ -163,3 +164,8 @@ defaults delete com.bowie.v2a
 - WAV 输出为 16-bit PCM；FLAC 体积预估按原始 PCM 的 55% 估算（经验值，实际 40–70%）。
 - 音频不写入封面图；元数据（标题/艺术家等）会保留。
 - 调试用的隐藏参数：`--snapshot <png>`、`--files`、`--set 格式/码率/采样率/音轨/声道`、`--trim 开始/结束`、`--name 名字`、`--convert`、`--popover`、`--show-trim`、`--show-rename`、`--save-preset`。
+
+## 预览
+<img width="1584" height="1570" alt="CleanShot 2026-10-28 at 11 17 35@2x" src="https://github.com/user-attachments/assets/4fabcc35-7504-4cc4-886c-8aee16558873" />
+<img width="1584" height="1570" alt="CleanShot 2026-10-28 at 11 22 03@2x" src="https://github.com/user-attachments/assets/9cb0bbd9-3b49-476d-b2e5-bb6886c6b04a" />
+<img width="1364" height="1350" alt="CleanShot 2026-10-28 at 11 18 55@2x" src="https://github.com/user-attachments/assets/d535b52e-7621-49fc-baab-805757df7ebe" />
