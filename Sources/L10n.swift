@@ -154,6 +154,7 @@ final class Localization: ObservableObject {
         "繁體中文": "繁體中文",
         "界面语言": "App language",
         "检查更新": "Check for updates",
+        "在 Finder 中显示": "Show in Finder",
         "检查": "Check",
         "前往下载": "Download",
         "重试": "Retry",

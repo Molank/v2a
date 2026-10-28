@@ -228,7 +228,8 @@ struct ContentView: View {
                             onTrim: { model.beginTrim(item) },
                             onRemove: { model.remove(item.id) },
                             onReveal: {
-                                if let out = item.outputURL { model.reveal(out) }
+                                // 已转换优先显示输出文件，否则显示源文件（含网络下载的视频）
+                                model.reveal(item.outputURL ?? item.url)
                             })
                 }
             }
@@ -1111,10 +1112,8 @@ private struct FileRow: View {
             Button(l10n.t("重命名…")) { onRename() }
             Button(l10n.t("裁剪…")) { onTrim() }
                 .disabled(item.info == nil)
-            if item.outputURL != nil {
-                Divider()
-                Button(l10n.t("在 Finder 中显示")) { onReveal() }
-            }
+            Divider()
+            Button(l10n.t("在 Finder 中显示")) { onReveal() }
             if !locked {
                 Divider()
                 Button(l10n.t("移除")) { onRemove() }
