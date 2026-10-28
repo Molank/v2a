@@ -39,11 +39,8 @@ App 已经装在 `/Applications/V2A.app`，直接打开即可（也可以在启�
 | 在 Finder 中显示 | 转换完成后可用 |
 | 移除 | 从列表拿走 |
 
-下载中的行会显示标题和进度条，可随时取消；失败会保留错误信息，点右侧图标移除。
 
-行首图标按文件格式生成（MP4 / MKV / AVI / MOV / WEBM / MP3 …）。几何取自参考稿 `参考图标.sketch` 的实测值：48×48 画板、圆角 15（参考稿为 19，按行内尺寸略收）、纸片 30.545×38.18 @ (8.727, 14.182)、顶右 45° 斜切 8.727、纸片不透明度 0.8、折角白 50%，格式名居中于纸片。
-
-声道标识会按实际布局显示：单声道、立体声、5.1、7.1，杜比编码（AC-3 / E-AC-3 / TrueHD）显示为「杜比 5.1」，带 Atmos 的显示「杜比全景声」。配色同样取自参考图实测：蓝/紫/橙/红系文档明度约 0.93–0.95，绿/青系压到 0.80–0.82（参考图里绿色本就比蓝色暗），避免荧光感、保证白字可读；绿/青系的饱和度再乘 1.22（参考图 Excel 绿 S≈77%），否则和低饱和底板混出来会发灰。
+声道标识会按实际布局显示：单声道、立体声、5.1、7.1，杜比编码（AC-3 / E-AC-3 / TrueHD）显示为「杜比 5.1」，带 Atmos 的显示「杜比全景声」。
 
 ### 裁剪
 
@@ -62,7 +59,6 @@ App 已经装在 `/Applications/V2A.app`，直接打开即可（也可以在启�
 - 上：源文件大小
 - 下：`≈` 转换后预估大小；转换完成变成 `→` 实际大小
 
-预估和真正执行共用同一套 `ConversionPlan`（格式、码率、采样率、声道、音轨、裁剪区间），改任何一项，预估立刻跟着变。
 
 ### 音频设置（齿轮按钮）
 
@@ -125,32 +121,11 @@ export PATH="/Users/bowie/Documents/deepseek-harness/default-workspace/video-to-
 - 支持 mp4 / mov / m4v / mkv / avi / flv / webm / ts / m2ts / wmv / mpg / 3gp / rmvb / vob / ogv / mxf / asf。
 - 网络受限时（例如没有代理的 YouTube），下载行会直接显示失败原因，不影响本地文件处理。
 
-## 从源码构建前准备
-
-仓库里**不含**第三方二进制（`bin/` 已加入 `.gitignore`，约 123 MB）。编译前把它们放回 `bin/`：
-
-```bash
-mkdir -p bin
-# ffmpeg / ffprobe：arm64 静态版
-curl -L https://evermeet.cx/ffmpeg/getrelease/zip -o /tmp/ffmpeg.zip && unzip -o /tmp/ffmpeg.zip -d bin
-curl -L https://evermeet.cx/ffmpeg/getrelease/ffprobe/zip -o /tmp/ffprobe.zip && unzip -o /tmp/ffprobe.zip -d bin
-# yt-dlp（universal）
-curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos -o bin/yt-dlp
-chmod +x bin/ffmpeg bin/ffprobe bin/yt-dlp
-```
-
-然后 `./build.sh` 即可，脚本会把它们打进 `V2A.app/Contents/Resources/bin/`。
 
 ## 内置了什么
 
-`V2A.app` 自带 ffmpeg / ffprobe（arm64 静态版 6.0，约 88 MB），**不依赖本机安装的 ffmpeg**，复制到别的 Mac 上也能直接跑。
+`V2A.app` 自带 ffmpeg / ffprobe（arm64 静态版 6.0，约 88 MB），**不依赖本机安装的 ffmpeg**。
 
-本机没有走 `brew install ffmpeg`，因为 Xcode 许可未接受、`clang` 被拦，且 `/opt/homebrew/bin` 不可写。如果你想让系统里也有 `ffmpeg` 命令：
-
-```bash
-sudo xcodebuild -license accept
-brew install ffmpeg
-```
 
 ## 目录结构
 
@@ -171,36 +146,7 @@ video-to-audio/
 └── docs/                   # 界面预览图
 ```
 
-## 检查更新
 
-偏好设置 → 关于 → 检查更新：读 `api.github.com/repos/Molank/v2a/releases/latest` 比较版本号，
-有新版本时给一个「前往下载」按钮跳到 Release 页面。API 被限流时自动改用
-`github.com/.../releases/latest` 的跳转地址判断，不依赖登录。
-
-## 发布（一条命令）
-
-仓库只提交源码、资源与文档；可运行的 App 作为 Release 附件分发。发版：
-
-```bash
-export GH_TOKEN=ghp_xxx      # 或 echo ghp_xxx > .gh_token（已 gitignore）
-./release.sh 1.1.0           # 改版本号 → 构建 → 打包 → 提交打 tag → 建 Release 上传附件
-./release.sh 1.1.0 --dry-run # 只构建打包，不推送
-```
-
-脚本会：写 `Info.plist` 的 `CFBundleShortVersionString` → `./build.sh --install` →
-`ditto` 打包到 `dist/V2A-<版本>.zip` → commit + tag `v<版本>` → push →
-调 GitHub API 建 Release 并上传 zip。完成后打印下载地址。
-
-App 里的「检查更新」读的就是这个 Release 的 `tag_name`，所以发版后用户点一下就能看到新版本。
-
-## 重新编译 / 安装
-
-```bash
-./build.sh            # 只构建，产物是当前目录下的 V2A.app
-./build.sh --install  # 构建后直接装到 /Applications 并清掉本地副本
-```
-
-脚本直连 Xcode 内的工具链（绕过 `/usr/bin/clang` 的许可检查），模块缓存在 `build/`，编译完自动清理。
 
 ## 卸载
 
