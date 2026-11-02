@@ -47,14 +47,14 @@ tell application "Finder"
     set current view of container window to icon view
     set toolbar visible of container window to false
     set statusbar visible of container window to false
-    set the bounds of container window to {200, 200, 740, 560}
+    set the bounds of container window to {200, 200, 740, 580}
     set viewOptions to the icon view options of container window
     set arrangement of viewOptions to not arranged
     set icon size of viewOptions to 96
     set text size of viewOptions to 13
     set background picture of viewOptions to file ".background:background.png"
-    set position of item "V2A.app" of container window to {140, 172}
-    set position of item "Applications" of container window to {400, 172}
+    set position of item "V2A.app" of container window to {140, 182}
+    set position of item "Applications" of container window to {400, 182}
     update without registering applications
     delay 1
     close
