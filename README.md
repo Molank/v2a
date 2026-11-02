@@ -10,7 +10,9 @@ macOS 原生风格界面，干净纯粹
 - 最新版：<https://github.com/Molank/v2a/releases/latest>
 - 仓库：<https://github.com/Molank/v2a>
 
-解压后把 `V2A.app` 拖进「应用程序」。首次打开若提示「无法验证开发者」，右键 App → 打开，或执行：
+下载 `.dmg`，打开后把左边的 **V2A** 拖到右边的 **Applications** 文件夹即可安装（也有 `.zip` 可选）。
+
+首次打开若提示「无法验证开发者」，右键 App → 打开，或执行：
 
 ```bash
 xattr -dr com.apple.quarantine /Applications/V2A.app
@@ -144,6 +146,8 @@ video-to-audio/
 ├── Resources/Info.plist
 ├── assets/                 # 图标工程与产出
 ├── build.sh                # 一键重新编译
+├── make_dmg.sh             # 生成带安装引导窗口的 DMG
+├── release.sh              # 一条命令发版
 └── docs/                   # 界面预览图
 ```
 

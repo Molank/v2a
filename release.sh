@@ -46,6 +46,10 @@ echo "▸ 打包 $ZIP"
 ditto -c -k --sequesterRsrc --keepParent "/Applications/V2A.app" "$ZIP"
 du -h "$ZIP" | awk '{print "  " $1}'
 
+DMG="dist/V2A-$VERSION.dmg"
+echo "▸ 生成安装镜像 $DMG"
+./make_dmg.sh "/Applications/V2A.app" "$VERSION" | tail -1
+
 if [ "$DRY_RUN" -eq 1 ]; then
   echo "▸ dry-run：跳过提交与发布"
   exit 0
@@ -70,7 +74,7 @@ cat > /tmp/v2a_release.json <<EOF
   "draft": false,
   "prerelease": false,
   "target_commitish": "main",
-  "body": "## V2A $VERSION\n\n下载 \`V2A-$VERSION.zip\`，解压后把 \`V2A.app\` 拖进「应用程序」。\n\n首次打开若提示「无法验证开发者」，右键 App → 打开，或执行：\n\n\`\`\`bash\nxattr -dr com.apple.quarantine /Applications/V2A.app\n\`\`\`\n"
+  "body": "## V2A $VERSION\n\n### 安装\n1. 打开 \`V2A-$VERSION.dmg\`\n2. 把左边的 **V2A** 拖到右边的 **Applications** 文件夹\n3. 从「应用程序」启动\n\n也可以下载 \`V2A-$VERSION.zip\` 手动解压。\n\n首次打开若提示「无法验证开发者」，右键 App → 打开，或执行：\n\n\`\`\`bash\nxattr -dr com.apple.quarantine /Applications/V2A.app\n\`\`\`\n"
 }
 EOF
 
@@ -87,16 +91,23 @@ fi
 RELEASE_ID=$(python3 -c "import json;print(json.load(open('/tmp/v2a_release_resp.json'))['id'])")
 PAGE=$(python3 -c "import json;print(json.load(open('/tmp/v2a_release_resp.json'))['html_url'])")
 
-echo "▸ 上传附件（$(du -m "$ZIP" | cut -f1) MB）"
-code=$(curl -s -o /tmp/v2a_asset_resp.json -w "%{http_code}" -X POST \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/zip" \
-  --data-binary "@$ZIP" \
-  "https://uploads.github.com/repos/$REPO/releases/$RELEASE_ID/assets?name=$(basename "$ZIP")")
-if [ "$code" != "201" ]; then
-  echo "上传附件失败（HTTP $code）" >&2
-  exit 1
-fi
+upload_asset() {
+  local file="$1" type="$2"
+  echo "▸ 上传 $(basename "$file")（$(du -m "$file" | cut -f1) MB）"
+  local code
+  code=$(curl -s -o /tmp/v2a_asset_resp.json -w "%{http_code}" -X POST \
+    -H "Authorization: Bearer $TOKEN" \
+    -H "Content-Type: $type" \
+    --data-binary "@$file" \
+    "https://uploads.github.com/repos/$REPO/releases/$RELEASE_ID/assets?name=$(basename "$file")")
+  if [ "$code" != "201" ]; then
+    echo "上传 $(basename "$file") 失败（HTTP $code）" >&2
+    exit 1
+  fi
+}
+
+upload_asset "$DMG" "application/x-apple-diskimage"
+upload_asset "$ZIP" "application/zip"
 
 echo ""
 echo "✓ 发布完成：$PAGE"
