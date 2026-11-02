@@ -40,7 +40,15 @@ MOUNT="$(hdiutil attach "$RW" -nobrowse -readwrite | tail -1 | awk -F'\t' '{prin
 echo "  挂载于 $MOUNT"
 
 echo "▸ 设置窗口布局"
-osascript <<AS || echo "  ⚠️ AppleScript 布局失败，将使用默认窗口（不影响拖拽安装）"
+# Finder 偶尔要过一会儿才认出新挂载的磁盘，先轮询
+for i in $(seq 1 20); do
+  if osascript -e "tell application \"Finder\" to exists disk \"$VOLNAME\"" 2>/dev/null | grep -q true; then break; fi
+  sleep 0.5
+done
+
+layout() {
+osascript <<AS
+
 tell application "Finder"
   tell disk "$VOLNAME"
     open
@@ -61,10 +69,23 @@ tell application "Finder"
   end tell
 end tell
 AS
+}
 
-# 让 Finder 把布局写进 .DS_Store
-sync
-sleep 1
+ok=0
+for attempt in 1 2 3; do
+  layout >/dev/null 2>&1 || true
+  sync
+  sleep 1
+  if [ -f "$MOUNT/.DS_Store" ]; then ok=1; break; fi
+  echo "  Finder 没写入布局，重试 ($attempt/3)"
+  sleep 1
+done
+
+if [ "$ok" -ne 1 ]; then
+  echo "✗ 安装窗口布局失败：.DS_Store 未生成" >&2
+  exit 1
+fi
+
 hdiutil detach "$MOUNT" -quiet
 MOUNT=""
 

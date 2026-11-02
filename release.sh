@@ -48,7 +48,7 @@ du -h "$ZIP" | awk '{print "  " $1}'
 
 DMG="dist/V2A-$VERSION.dmg"
 echo "▸ 生成安装镜像 $DMG"
-./make_dmg.sh "/Applications/V2A.app" "$VERSION" | tail -1
+./make_dmg.sh "/Applications/V2A.app" "$VERSION" | tail -1 || { echo "DMG 生成失败" >&2; exit 1; }
 
 if [ "$DRY_RUN" -eq 1 ]; then
   echo "▸ dry-run：跳过提交与发布"
