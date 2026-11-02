@@ -13,75 +13,68 @@ def font(size, weight=0):
 
 
 def radial_blob(size, center, radius, color, alpha):
-    """一团模糊的径向色块，用来做弥散渐变"""
     layer = Image.new("L", size, 0)
     d = ImageDraw.Draw(layer)
     cx, cy = center
     d.ellipse([cx - radius, cy - radius, cx + radius, cy + radius], fill=alpha)
-    layer = layer.filter(ImageFilter.GaussianBlur(radius * 0.55))
-    solid = Image.new("RGB", size, color)
-    return solid, layer
+    layer = layer.filter(ImageFilter.GaussianBlur(radius * 0.6))
+    return Image.new("RGB", size, color), layer
 
 
-# ---------- 底色：粉紫 → 紫的弥散渐变 ----------
-img = Image.new("RGB", (W, H), (250, 245, 255))
+# ---------- 底色：接近白的粉紫，颜色只在四周淡淡晕开 ----------
+img = Image.new("RGB", (W, H), (253, 251, 254))
 d = ImageDraw.Draw(img)
 for y in range(H):
     t = y / (H - 1)
-    r = int(251 + (237 - 251) * t)
-    g = int(240 + (224 - 240) * t)
-    b = int(252 + (255 - 252) * t)
+    r = int(254 + (250 - 254) * t)
+    g = int(251 + (246 - 251) * t)
+    b = int(255 + (253 - 255) * t)
     d.line([(0, y), (W, y)], fill=(r, g, b))
 
 blobs = [
-    ((W * 0.18, H * 0.22), W * 0.42, (244, 171, 252), 190),   # 左上粉紫
-    ((W * 0.86, H * 0.26), W * 0.38, (192, 132, 252), 175),   # 右上紫
-    ((W * 0.50, H * 0.92), W * 0.55, (167, 139, 250), 150),   # 底部紫
-    ((W * 0.06, H * 0.86), W * 0.30, (240, 171, 252), 120),   # 左下粉
+    ((W * 0.10, H * 0.10), W * 0.52, (248, 205, 235), 86),   # 左上淡粉
+    ((W * 0.94, H * 0.18), W * 0.42, (224, 205, 252), 80),   # 右上淡紫
+    ((W * 0.72, H * 1.02), W * 0.62, (214, 196, 250), 88),   # 右下淡紫
+    ((W * 0.10, H * 0.98), W * 0.34, (247, 214, 240), 64),    # 左下粉
 ]
 for (center, radius, color, alpha) in blobs:
     solid, mask = radial_blob((W, H), center, radius, color, alpha)
-    img = Image.composite(solid, img, mask.point(lambda v: int(v * 0.55)))
+    img = Image.composite(solid, img, mask)
 
-# 顶部压一层很淡的白，保证标题对比
-veil = Image.new("L", (W, H), 0)
-vd = ImageDraw.Draw(veil)
-for y in range(int(H * 0.42)):
-    vd.line([(0, y), (W, y)], fill=int(70 * (1 - y / (H * 0.42)) ** 1.4))
-veil = veil.filter(ImageFilter.GaussianBlur(24))
-img = Image.composite(Image.new("RGB", (W, H), (255, 255, 255)), img, veil)
+# ---------- 文字层（带一点透明度，和背景融合） ----------
+overlay = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+od = ImageDraw.Draw(overlay)
 
-d = ImageDraw.Draw(img)
-
-# ---------- 标题 ----------
 title = "安装 V2A"
 f_title = font(23, weight=1)
-tw = d.textlength(title, font=f_title)
-d.text(((W - tw) / 2, 70), title, font=f_title, fill=(59, 7, 100))
+tw = od.textlength(title, font=f_title)
+od.text(((W - tw) / 2, 70), title, font=f_title, fill=(52, 20, 88, 235))
 
 sub = "Video to Audio for macOS"
 f_sub = font(13)
-sw = d.textlength(sub, font=f_sub)
-d.text(((W - sw) / 2, 150), sub, font=f_sub, fill=(124, 58, 237))
+sw = od.textlength(sub, font=f_sub)
+od.text(((W - sw) / 2, 150), sub, font=f_sub, fill=(110, 80, 165, 190))
 
-# ---------- 箭头：两端都留出空档，居中 ----------
+# ---------- 箭头：两端留出相同间距，存在感降低 ----------
 arrow_y = 384
-x0, x1 = 402, 704          # 2x 像素；对应点 201 → 352
-shaft_end = x1 - 42
-d.line([(x0, arrow_y), (shaft_end, arrow_y)], fill=(139, 92, 246), width=10)
-d.polygon([(shaft_end - 4, arrow_y - 27), (x1, arrow_y), (shaft_end - 4, arrow_y + 27)],
-          fill=(139, 92, 246))
+x0, x1 = 408, 644            # 2x 像素 = 212 → 330pt，左右各约 22pt 空档
+shaft_end = x1 - 34
+od.line([(x0, arrow_y), (shaft_end, arrow_y)], fill=(139, 92, 246, 150), width=8)
+od.polygon([(shaft_end - 2, arrow_y - 22), (x1, arrow_y), (shaft_end - 2, arrow_y + 22)],
+           fill=(139, 92, 246, 150))
 
-# ---------- 底部提示 ----------
+# ---------- 底部提示：中英靠近，整体下移 ----------
 tip = "把左边的 V2A 拖到右边的 Applications 文件夹"
 f_tip = font(15)
-pw = d.textlength(tip, font=f_tip)
-d.text(((W - pw) / 2, 540), tip, font=f_tip, fill=(76, 29, 149))
+pw = od.textlength(tip, font=f_tip)
+od.text(((W - pw) / 2, 556), tip, font=f_tip, fill=(72, 40, 120, 200))
 
 tip_en = "Drag V2A onto Applications to install"
 f_en = font(12)
-ew = d.textlength(tip_en, font=f_en)
-d.text(((W - ew) / 2, 596), tip_en, font=f_en, fill=(146, 118, 200))
+ew = od.textlength(tip_en, font=f_en)
+od.text(((W - ew) / 2, 598), tip_en, font=f_en, fill=(120, 96, 165, 165))
+
+img = Image.alpha_composite(img.convert("RGBA"), overlay).convert("RGB")
 
 out = os.path.join(HERE, "dmg", "background.png")
 # 144dpi：像素 1080×760，点尺寸正好 540×380，Retina 上不发虚
