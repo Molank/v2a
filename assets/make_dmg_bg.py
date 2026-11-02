@@ -32,10 +32,10 @@ for y in range(H):
     d.line([(0, y), (W, y)], fill=(r, g, b))
 
 blobs = [
-    ((W * 0.10, H * 0.10), W * 0.52, (248, 205, 235), 86),   # 左上淡粉
-    ((W * 0.94, H * 0.18), W * 0.42, (224, 205, 252), 80),   # 右上淡紫
-    ((W * 0.72, H * 1.02), W * 0.62, (214, 196, 250), 88),   # 右下淡紫
-    ((W * 0.10, H * 0.98), W * 0.34, (247, 214, 240), 64),    # 左下粉
+    ((W * 0.10, H * 0.10), W * 0.52, (248, 205, 235), 58),   # 左上淡粉
+    ((W * 0.94, H * 0.18), W * 0.42, (224, 205, 252), 54),   # 右上淡紫
+    ((W * 0.72, H * 1.02), W * 0.62, (214, 196, 250), 60),   # 右下淡紫
+    ((W * 0.10, H * 0.98), W * 0.34, (247, 214, 240), 42),    # 左下粉
 ]
 for (center, radius, color, alpha) in blobs:
     solid, mask = radial_blob((W, H), center, radius, color, alpha)
@@ -53,7 +53,7 @@ od.text(((W - tw) / 2, 70), title, font=f_title, fill=(52, 20, 88, 235))
 sub = "Video to Audio for macOS"
 f_sub = font(13)
 sw = od.textlength(sub, font=f_sub)
-od.text(((W - sw) / 2, 150), sub, font=f_sub, fill=(110, 80, 165, 190))
+od.text(((W - sw) / 2, 132), sub, font=f_sub, fill=(110, 80, 165, 190))
 
 # ---------- 箭头：两端留出相同间距，存在感降低 ----------
 arrow_y = 384
@@ -65,7 +65,7 @@ od.polygon([(shaft_end - 2, arrow_y - 22), (x1, arrow_y), (shaft_end - 2, arrow_
 
 # ---------- 底部提示：中英靠近，整体下移 ----------
 tip = "把左边的 V2A 拖到右边的 Applications 文件夹"
-f_tip = font(15)
+f_tip = font(13.5)
 pw = od.textlength(tip, font=f_tip)
 od.text(((W - pw) / 2, 556), tip, font=f_tip, fill=(72, 40, 120, 200))
 
